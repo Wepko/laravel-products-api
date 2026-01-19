@@ -5,9 +5,9 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
-/.env
-/.env.backup
-/.phpunit.result.cache
+#/.env
+#/.env.backup
+#/.phpunit.result.cache
 Homestead.json
 Homestead.yaml
 auth.json
@@ -20,11 +20,11 @@ _ide_helper_models.php
 .DS_Store
 Thumbs.db
 
-# Docker
-!docker/nginx/
-!docker/php/
-!docker/mysql/
-docker-compose.override.yml
+## Docker
+#!docker/nginx/
+#!docker/php/
+#!docker/mysql/
+#docker-compose.override.yml
 
 # Elasticsearch
 /data/
