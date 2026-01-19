@@ -1,59 +1,233 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
+# 📦 Laravel Products API
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+REST API для каталога товаров с фильтрацией, сортировкой, пагинацией и поиском.  
+Проект реализован как тестовое задание с упором на **чистую архитектуру**, **масштабируемость** и **production-подход**.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Стек технологий
 
-## Learning Laravel
+- **PHP 8.3**
+- **Laravel 11**
+- **MySQL** — основное хранилище
+- **Redis** — кеширование
+- **Elasticsearch** — полнотекстовый поиск
+- **Docker / Docker Compose**
+- **Swagger (OpenAPI)** — документация API
+- **k6** — нагрузочное тестирование
+- **PHPUnit** — unit tests
+- **Spatie Laravel Data (DTO)**
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🧱 Архитектура
 
-## Laravel Sponsors
+Проект построен по слоистой архитектуре:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+Controller → Service → Repository → Database
+                 ↓
+                DTO
+```
 
-### Premium Partners
+### Почему так:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Controller** — только HTTP слой
+- **Service** — бизнес-логика и orchestration
+- **Repository** — работа с данными (SQL / Elastic)
+- **DTO** — строгие входные и выходные контракты
 
-## Contributing
+Это упрощает:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- тестирование
+- оптимизацию
+- масштабирование
+- поддержку
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🆔 UUID вместо auto-increment ID
 
-## Security Vulnerabilities
+Во всех таблицах используются **UUID** как primary key.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Почему:
 
-## License
+- безопаснее для публичного API
+- удобно для распределённых систем
+- нет утечки информации о количестве записей
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Реализовано через:
+- `AbstractBaseModel`
+- встроенный трейт Laravel `HasUuids`
+
+---
+
+## 🗄️ Структура базы данных
+
+### Categories
+
+- `id (uuid)`
+- `name`
+- `created_at`
+- `updated_at`
+
+### Products
+
+- `id (uuid)`
+- `name`
+- `price`
+- `category_id`
+- `in_stock`
+- `rating`
+- `created_at`
+- `updated_at`
+
+Индексы:
+- `category_id`
+- `price`
+- `rating`
+
+---
+
+## 🔍 API: Products
+
+### Endpoint
+
+```
+GET /api/products
+```
+
+### Фильтры (query params)
+
+|Параметр|Тип|Описание|
+|---|---|---|
+|`q`|string|Поиск по названию|
+|`price_from`|float|Минимальная цена|
+|`price_to`|float|Максимальная цена|
+|`category_id`|uuid|Категория|
+|`in_stock`|boolean|В наличии|
+|`rating_from`|float|Минимальный рейтинг|
+|`sort`|string|Сортировка|
+
+### Сортировка
+- `price_asc`
+- `price_desc`
+- `rating_desc`
+- `newest`
+
+### Пагинация
+
+Стандартная Laravel пагинация (`page`, `per_page`).
+
+---
+
+## 📘 Swagger / OpenAPI
+
+Документация доступна по адресу:
+
+```
+http://localhost/api/documentation
+```
+
+Реализована через:
+
+- **L5 Swagger**
+- **PHP 8 Attributes**
+
+Swagger используется как **контракт API** между backend и frontend.
+
+---
+
+## 🧪 Тестирование
+
+### Unit Tests
+
+Покрыты:
+
+- `ProductRepository` — фильтрация и сортировка
+- `ProductService` — возврат DTO и пагинации
+
+Принцип:
+
+> Laravel и Eloquent не тестируются, тестируется бизнес-логика.
+
+Запуск:
+
+```bash
+docker compose exec app php artisan test
+```
+
+---
+
+## ⚡ Load / Performance Tests
+
+Используется **k6**.
+
+### Сценарии:
+
+- базовый список товаров
+- фильтрация + сортировка
+- поиск по имени
+
+### Пример запуска:
+
+```bash
+k6 run load-tests/products.js
+```
+
+### Результаты (пример):
+
+- без кеша: p95 ~450ms
+- с Redis: p95 ~120ms
+- Elasticsearch снижает нагрузку на MySQL при поиске
+    
+
+---
+
+## 🚀 Оптимизации
+
+Реализованные и возможные:
+
+- Redis cache для одинаковых запросов
+- Elasticsearch для полнотекстового поиска
+- eager loading (`with('category')`)
+- индексы в БД
+- Repository позволяет легко заменить источник данных
+
+---
+
+## 🐳 Запуск проекта
+
+### 1️⃣ Клонирование
+
+```bash
+git clone <repo>
+cd laravel-products-api
+```
+
+### 2️⃣ Запуск Docker
+
+```bash
+docker compose up -d
+```
+
+### 3️⃣ Установка зависимостей
+
+```bash
+docker compose exec app composer install
+```
+
+### 4️⃣ Миграции и сиды
+
+```bash
+docker compose exec app php artisan migrate --seed
+```
+
+## 👤 Автор
+
+Максим Сотников  
+Backend Developer (PHP / Laravel)
+
+---
