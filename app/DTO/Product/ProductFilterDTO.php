@@ -8,22 +8,24 @@ use Spatie\LaravelData\Attributes\MapInputName;
 class ProductFilterDTO extends Data
 {
     public function __construct(
-        public ?string $q,
+        public ?string $q = null,
 
         #[MapInputName('price_from')]
-        public ?float  $priceFrom,
+        public ?float  $priceFrom = null,
 
         #[MapInputName('price_to')]
-        public ?float  $priceTo,
+        public ?float  $priceTo = null,
 
-        public ?int    $category_id,
+        #[MapInputName('category_id')]
+        public ?int    $categoryId = null,
 
-        public ?bool   $in_stock,
+        #[MapInputName('in_stock')]
+        public ?bool   $inStock = null,
 
         #[MapInputName('rating_from')]
-        public ?float  $ratingFrom,
+        public ?float  $ratingFrom = null,
 
-        public ?string $sort,
+        public ?string $sort = null,
 
         public int     $page = 1,
 

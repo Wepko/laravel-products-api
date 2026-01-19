@@ -5,6 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property mixed $id
+ * @property mixed $rating
+ * @property mixed $name
+ * @property mixed $price
+ * @property mixed $in_stock
+ * @property BelongsTo $category
+ */
 class Product extends AbstractBaseModel
 {
     use HasFactory;
