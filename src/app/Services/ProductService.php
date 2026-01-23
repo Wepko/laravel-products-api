@@ -25,10 +25,10 @@ class ProductService
         $this->repository = new ProductRepository();
     }
 
-    public function getPaginateProducts(ProductFilterDTO $filters): LengthAwarePaginator
+    public function getPaginateProducts(ProductFilterDTO $filters): CursorPaginator
     {
-        $paginator = $this->repository->paginate($filters);
-
+        $paginator = $this->repository->cursorPaginate($filters);
+        // Тут возможно лучше использовать Mapper
         $paginator->setCollection(
             $paginator->getCollection()->map(
                 fn(Product $product) => new ProductDTO(
