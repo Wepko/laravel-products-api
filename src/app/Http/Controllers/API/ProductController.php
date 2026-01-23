@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\API;
 
 
-use App\DTO\Product\ProductFilterDTO;
+use App\DTOs\Product\ProductFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use phpDocumentor\Reflection\Exception;
 
 #[OA\Info(
     version: '1.0.0',
@@ -51,4 +52,17 @@ class ProductController extends Controller
             $service->getPaginateProducts($filters)
         );
     }
+
+    /**
+     * @throws Exception
+     */
+    public function showBySlug(Request $request, ProductService $service, string $slug): JsonResponse
+    {
+        $filters = ProductFilterDTO::from($request->query());
+
+        return response()->json(
+            $service->getPaginateProductsBySlug(filters: $filters, type: $slug)
+        );
+    }
+
 }

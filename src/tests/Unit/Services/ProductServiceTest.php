@@ -5,8 +5,8 @@ namespace Tests\Unit\Services;
 use Tests\TestCase;
 use App\Models\Product;
 use App\Services\ProductService;
-use App\DTO\Product\ProductFilterDTO;
-use App\DTO\Product\ProductDTO;
+use App\DTOs\Product\ProductFilterDTO;
+use App\DTOs\Product\ProductDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Pagination\LengthAwarePaginator;
 

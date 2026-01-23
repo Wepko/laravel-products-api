@@ -5,7 +5,7 @@ namespace Tests\Unit\Repositories;
 use Tests\TestCase;
 use App\Models\Product;
 use App\Repositories\Eloquent\ProductRepository;
-use App\DTO\Product\ProductFilterDTO;
+use App\DTOs\Product\ProductFilterDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ProductRepositoryTest extends TestCase

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO\Product;
+namespace App\DTOs\Product;
 
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\MapInputName;
@@ -94,6 +94,7 @@ class ProductFilterDTO extends Data
         )]
         #[MapInputName('per_page')]
         public int     $perPage = 15,
+        public ?string $cursor = null,
     )
     {
     }
