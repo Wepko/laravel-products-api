@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use OpenApi\Attributes as OA;
 use phpDocumentor\Reflection\Exception;
 
