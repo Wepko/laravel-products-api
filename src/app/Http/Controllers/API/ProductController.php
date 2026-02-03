@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 
 use App\DTOs\Product\ProductFilterDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductFilterRequest;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,15 @@ use phpDocumentor\Reflection\Exception;
 class ProductController extends Controller
 {
 
+    public function __construct(
+        private readonly  ProductService $service,
+    ) {
+    }
+
+    /**
+     * @param ProductFilterRequest $request
+     * @return JsonResponse
+     */
     #[OA\Get(
         path: '/api/products',
         description: 'Возвращает пагинированный список товаров с возможностью фильтрации и сортировки',
@@ -45,25 +55,23 @@ class ProductController extends Controller
             )
         ]
     )]
-    public function index(Request $request, ProductService $service): JsonResponse
+    public function index(ProductFilterRequest $request): JsonResponse
     {
-        $filters = ProductFilterDTO::from($request->query());
+        $data =  $this->service->getPaginateProducts(filters: $request->toDTO());
 
-        return response()->json(
-            $service->getPaginateProducts($filters)
-        );
+        return response()->json($data);
     }
 
     /**
      * @throws Exception
      */
-    public function showBySlug(Request $request, ProductService $service, string $slug): JsonResponse
+    public function showBySlug(Request $request, string $slug): JsonResponse
     {
         $filters = ProductFilterDTO::from($request->query());
 
-        return response()->json(
-            $service->getPaginateProductsBySlug(filters: $filters, type: $slug)
-        );
+        $data = $this->service->getPaginateProductsBySlug(filters: $filters, type: $slug);
+
+        return response()->json($data);
     }
 
 }
