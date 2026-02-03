@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\DTOs\Product\ProductFilterDTO;
+use App\Enums\ProductSortEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -30,7 +31,7 @@ class ProductFilterRequest extends FormRequest
             'category_id' => ['nullable', 'integer', 'exists:categories,id'], // предполагается, что есть таблица categorie],
             'in_stock' => ['nullable', 'boolean'],
             'rating_from' => ['nullable', 'numeric', 'min:0', 'max:5'],
-            'sort' => ['nullable', 'string', Rule::in(['price_asc', 'price_desc', 'rating_desc', 'newest'])],
+            'sort' => ['nullable', 'string', Rule::in(ProductSortEnum::values())],
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'cursor' => ['nullable', 'string']

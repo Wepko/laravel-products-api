@@ -3,12 +3,12 @@
 namespace App\Repositories\Eloquent;
 
 use App\DTOs\Product\ProductFilterDTO;
+use App\Enums\ProductSortEnum;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Pagination\CursorPaginator;
-use phpDocumentor\Reflection\Exception;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -41,7 +41,7 @@ class ProductRepository implements ProductRepositoryInterface
         $query = $this->buildQuery($productFilterDTO);
 
         if (!$productFilterDTO->sort) {
-            $productFilterDTO->sort = 'created_at_desc'; // или 'id_desc'
+            $productFilterDTO->sort = ProductSortEnum::CREATED_AT_DESC->value; // или 'id_desc'
         }
 
         return $query->cursorPaginate(
@@ -101,17 +101,19 @@ class ProductRepository implements ProductRepositoryInterface
      */
     private function applySorting($query, ?string $sort): void
     {
-        $sorting = match($sort) {
-            'price_desc' => ['price', 'desc'],
-            'price_asc' => ['price', 'asc'],
-            'name_asc' => ['name', 'asc'],
-            'name_desc' => ['name', 'desc'],
-            'created_at_desc' => ['created_at', 'desc'],
+        $sorting = match ($sort) {
+            ProductSortEnum::PRICE_DESC->value => ['price', 'desc'],
+            ProductSortEnum::PRICE_ASC->value => ['price', 'asc'],
+            ProductSortEnum::RATING_DESC->value => ['rating', 'desc'],
+            ProductSortEnum::RATING_ASC->value => ['rating', 'asc'],
+            ProductSortEnum::NAME_ASC->value => ['name', 'asc'],
+            ProductSortEnum::NAME_DESC->value => ['name', 'desc'],
+            ProductSortEnum::CREATED_AT_DESC->value => ['created_at', 'desc'],
             default => null
         };
 
         if ($sorting) {
-            $query->orderBy($sorting[0], $sorting[1]);
+            $query->orderBy(...$sorting);
         }
     }
 }

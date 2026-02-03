@@ -2,6 +2,7 @@
 
 namespace App\DTOs\Product;
 
+use App\Enums\ProductSortEnum;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\MapInputName;
 use OpenApi\Attributes as OA;
@@ -72,8 +73,8 @@ class ProductFilterDTO extends Data
         #[OA\Property(
             description: 'Параметр сортировки',
             type: 'string',
-            enum: ['price_asc', 'price_desc', 'rating_desc', 'newest'],
-            example: 'price_desc',
+            enum: ProductSortEnum::class,
+            example: ProductSortEnum::PRICE_DESC->value,
             nullable: true
         )]
         public ?string $sort = null,
