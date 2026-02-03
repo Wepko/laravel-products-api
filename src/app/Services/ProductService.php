@@ -28,19 +28,19 @@ class ProductService
     public function getPaginateProducts(ProductFilterDTO $filters): LengthAwarePaginator
     {
         $paginator = $this->repository->paginate($filters);
-        // Тут возможно лучше использовать Mapper
-        $paginator->setCollection(
-            $paginator->getCollection()->map(
-                fn(Product $product) => new ProductDTO(
-                    id: $product->id,
-                    name: $product->name,
-                    price: (float)$product->price,
-                    inStock: $product->in_stock,
-                    rating: $product->rating,
-                    category: $product->category ? CategoryDTO::from($product->category->toArray()) : null,
-                )
+
+        $transformedCollection = $paginator->getCollection()->map(
+            fn(Product $product) => new ProductDTO(
+                id: $product->id,
+                name: $product->name,
+                price: (float)$product->price,
+                inStock: $product->in_stock,
+                rating: $product->rating,
+                category: $product->category ? CategoryDTO::from($product->category->toArray()) : null,
             )
         );
+
+        $paginator->setCollection($transformedCollection);
 
         return $paginator;
     }

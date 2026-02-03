@@ -6,6 +6,7 @@ namespace App\Http\Controllers\API;
 use App\DTOs\Product\ProductFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductFilterRequest;
+use App\Http\Resources\ProductResource;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class ProductController extends Controller
 
     /**
      * @param ProductFilterRequest $request
-     * @return JsonResponse
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     #[OA\Get(
         path: '/api/products',
@@ -55,21 +56,28 @@ class ProductController extends Controller
             )
         ]
     )]
-    public function index(ProductFilterRequest $request): JsonResponse
+    /*
+     * ToDo: only standard  responseJson
+     *  don't use AnonymousResourceCollection!
+     */
+    public function index(ProductFilterRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $data =  $this->service->getPaginateProducts(filters: $request->toDTO());
+        $products =  $this->service->getPaginateProducts(filters: $request->toDTO());
 
-        return response()->json($data);
+        /*
+         * ToDo: In ProductResource use DTO implementation
+         *  best practice
+         */
+        return ProductResource::collection($products);
     }
+
 
     /**
      * @throws Exception
      */
-    public function showBySlug(Request $request, string $slug): JsonResponse
+    public function showBySlug(ProductFilterRequest $request, string $slug): JsonResponse
     {
-        $filters = ProductFilterDTO::from($request->query());
-
-        $data = $this->service->getPaginateProductsBySlug(filters: $filters, type: $slug);
+        $data = $this->service->getPaginateProductsBySlug(filters: $request->toDTO(), type: $slug);
 
         return response()->json($data);
     }
