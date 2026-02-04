@@ -3,11 +3,13 @@ version: '3.9'
 services:
   app:
     build:
-      context: ./docker/php
+      context: ./
+      dockerfile: docker/php/Dockerfile
     container_name: laravel_app
     working_dir: /var/www
     volumes:
       - ./src:/var/www
+      - ./docker/php/conf.d:/usr/local/etc/php/conf.d  # Добавить конфиги PHP
     depends_on:
       - mysql
       - redis
@@ -17,7 +19,7 @@ services:
     image: nginx:alpine
     container_name: laravel_nginx
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./src:/var/www
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf

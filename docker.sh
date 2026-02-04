@@ -113,57 +113,110 @@ case "$1" in
         docker compose exec app php artisan tinker
         ;;
 
-    "install")
-        print_info "Установка проекта Laravel..."
+   "install")
+        print_info "🚀 Установка проекта Laravel Products API..."
 
-        # Создаем .env файл если его нет
-        if [ ! -f ".env" ]; then
-            cp .env.example .env
-            print_info "Создан .env файл"
+        # Проверяем Docker
+        check_docker
+        check_docker_compose
+
+        # 1. Копируем .env файл если его нет в папке src
+        if [ ! -f "src/.env" ]; then
+            if [ -f ".env.example" ]; then  # Без src/
+                cp .env.example src/.env     # Из корня в src/
+                print_success "Создан .env файл в папке src/"
+            else
+                print_warning "Файл .env.example не найден в папке src/"
+            fi
+        else
+            print_info "Файл .env уже существует в папке src/"
         fi
 
-        # Запускаем контейнеры
-        docker compose up -d --build
+        # 2. Собираем и запускаем контейнеры
+        print_info "🐳 Сборка и запуск Docker контейнеров..."
+        docker compose build --no-cache
+        docker compose up -d
 
-        # Устанавливаем Laravel если проект пустой
-        if [ ! -f "composer.json" ]; then
-            print_info "Установка Laravel..."
-            docker compose exec app composer create-project laravel/laravel . --prefer-dist
+        # 3. Ждем запуска сервисов
+        print_info "⏳ Ждем запуска сервисов (30 секунд)..."
+        sleep 30
+
+        # 4. Устанавливаем PHP зависимости
+        print_info "📦 Установка PHP зависимостей..."
+        docker compose exec -T app composer install --no-interaction --prefer-dist --optimize-autoloader
+
+        # 5. Генерируем ключ приложения внутри контейнера
+        print_info "🔑 Генерация ключа приложения..."
+        docker compose exec -T app php artisan key:generate --force
+
+        # 6. Копируем сгенерированный ключ обратно на хост
+        print_info "📋 Копируем обновленный .env файл..."
+        docker compose cp app:/var/www/.env ./src/.env.container 2>/dev/null || true
+        if [ -f "./src/.env.container" ]; then
+            # Берем только APP_KEY из контейнера
+            APP_KEY_CONTAINER=$(grep "^APP_KEY=" ./src/.env.container)
+            if [ ! -z "$APP_KEY_CONTAINER" ]; then
+                # Обновляем APP_KEY в локальном .env
+                grep -v "^APP_KEY=" ./src/.env > ./src/.env.tmp
+                echo "$APP_KEY_CONTAINER" >> ./src/.env.tmp
+                mv ./src/.env.tmp ./src/.env
+                print_success "Ключ приложения обновлен"
+            fi
+            rm -f ./src/.env.container
         fi
 
-        # Устанавливаем зависимости
-        print_info "Установка PHP зависимостей..."
-        docker compose exec app composer install
+        # 7. Устанавливаем NPM зависимости
+        print_info "📦 Установка Node.js зависимостей..."
+        docker compose exec -T app npm install --quiet
 
-        print_info "Установка Node.js зависимостей..."
-        docker compose exec app npm install
+        # 8. Запускаем миграции
+        print_info "🔄 Запуск миграций..."
+        docker compose exec -T app php artisan migrate --force
 
-        # Генерируем ключ приложения
-        print_info "Генерация ключа приложения..."
-        docker compose exec app php artisan key:generate
+        # 9. Запускаем сидеры
+        print_info "🌱 Запуск сидеров..."
+        docker compose exec -T app php artisan db:seed --force
 
-        # Запускаем миграции
-        print_info "Запуск миграций..."
-        docker compose exec app php artisan migrate
+        # 10. Устанавливаем права
+        print_info "🔐 Установка прав на папки..."
+        docker compose exec -T app chmod -R 775 storage bootstrap/cache
 
-        # Устанавливаем права
-        print_info "Установка прав..."
-        docker compose exec app chmod -R 775 storage bootstrap/cache
+        # 11. Создаем симлинк для storage
+        print_info "🔗 Создание симлинка storage..."
+        docker compose exec -T app php artisan storage:link
 
-        print_success "Установка завершена!"
+        # 12. Генерируем документацию Swagger
+        print_info "📚 Генерация документации API..."
+        docker compose exec -T app php artisan l5-swagger:generate
+
+        # 13. Очищаем кэш
+        print_info "🧹 Очистка кэша..."
+        docker compose exec -T app php artisan config:clear
+        docker compose exec -T app php artisan cache:clear
+        docker compose exec -T app php artisan view:clear
+        docker compose exec -T app php artisan route:clear
+
+        print_success "✅ Установка завершена!"
         echo ""
-        print_info "Доступные адреса:"
-        echo "  Приложение:      http://localhost:8080"
-        echo "  PHPMyAdmin:      http://localhost:8081 (root/secret)"
-        echo "  Mailpit:         http://localhost:8025"
-        echo "  Meilisearch:     http://localhost:7700"
-        echo "  Elasticsearch:   http://localhost:9200"
+        print_info "🌐 Доступные адреса:"
+        echo "   Приложение:      http://localhost"
+        echo "   API документация: http://localhost/api/documentation"
+        echo "   phpMyAdmin:      http://localhost:8080 (root/secret)"
+        echo "   Elasticsearch:   http://localhost:9200"
+        echo "   MySQL:           localhost:3306 (laravel/secret)"
+        echo "   Redis:           localhost:6379"
         echo ""
-        print_info "Доступные команды:"
-        echo "  ./docker.sh up       - Запуск контейнеров"
-        echo "  ./docker.sh down     - Остановка контейнеров"
-        echo "  ./docker.sh artisan  - Запуск artisan команд"
-        echo "  ./docker.sh shell    - Войти в контейнер"
+        print_info "🔧 Команды управления:"
+        echo "   ./docker.sh up       - Запуск контейнеров"
+        echo "   ./docker.sh down     - Остановка контейнеров"
+        echo "   ./docker.sh logs     - Показать логи"
+        echo "   ./docker.sh artisan  - Запуск artisan команд"
+        echo "   ./docker.sh shell    - Войти в контейнер"
+        echo "   ./docker.sh fresh    - Пересоздать БД с тестовыми данными"
+        echo ""
+        print_info "📝 Проверка работоспособности:"
+        echo "   curl http://localhost/api/products"
+        echo "   или откройте http://localhost в браузере"
         ;;
 
     "status")
