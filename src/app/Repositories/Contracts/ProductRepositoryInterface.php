@@ -18,5 +18,5 @@ interface ProductRepositoryInterface
 
     public function cursorPaginate(ProductFilterDTO $productFilterDTO): CursorPaginator;
 
-//    public function findBySpecification(ProductSpecification $specification): LengthAwarePaginator;
+    public function customPaginate(ProductFilterDTO $productFilterDTO);
 }

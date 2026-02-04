@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\DTOs\Product\ProductFilterDTO;
 use App\Enums\ProductSortEnum;
+use App\Filters\ProductFilter;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -12,6 +13,10 @@ use Illuminate\Pagination\CursorPaginator;
 
 class ProductRepository implements ProductRepositoryInterface
 {
+    public function __construct(
+        private ProductFilter $filter
+    ) {}
+
     public function paginate(ProductFilterDTO $productFilterDTO): LengthAwarePaginator
     {
         $query = $this->buildQuery($productFilterDTO);
@@ -41,7 +46,7 @@ class ProductRepository implements ProductRepositoryInterface
         $query = $this->buildQuery($productFilterDTO);
 
         if (!$productFilterDTO->sort) {
-            $productFilterDTO->sort = ProductSortEnum::CREATED_AT_DESC->value; // или 'id_desc'
+            $productFilterDTO->sort = ProductSortEnum::CREATED_AT_DESC->value;
         }
 
         return $query->cursorPaginate(
@@ -60,35 +65,15 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $query = Product::query()->with('category');
 
-        // Фильтр по наличию
-        if ($filters->inStock !== null) {
-            $query->where('in_stock', $filters->inStock);
-        }
-
-        // Фильтр по цене от
-        if ($filters->priceFrom !== null) {
-            $query->where('price', '>=', $filters->priceFrom);
-        }
-
-        // Фильтр по цене до
-        if ($filters->priceTo !== null) {
-            $query->where('price', '<=', $filters->priceTo);
-        }
-
-        // Фильтр по категории
-        if ($filters->categoryId !== null) {
-            $query->where('category_id', $filters->categoryId);
-        }
-
-        // Фильтр по рейтингу от
-        if ($filters->ratingFrom !== null) {
-            $query->where('rating', '>=', $filters->ratingFrom);
-        }
-
-        // Поиск по названию
-        if ($filters->q) {
-            $query->where('name', 'like', "%{$filters->q}%");
-        }
+        // Применяем фильтры через класс ProductFilter
+        $this->filter->apply($query, [
+            'inStock' => $filters->inStock,
+            'priceFrom' => $filters->priceFrom,
+            'priceTo' => $filters->priceTo,
+            'categoryId' => $filters->categoryId,
+            'ratingFrom' => $filters->ratingFrom,
+            'q' => $filters->q,
+        ]);
 
         // Сортировка
         $this->applySorting($query, $filters->sort);
@@ -115,5 +100,21 @@ class ProductRepository implements ProductRepositoryInterface
         if ($sorting) {
             $query->orderBy(...$sorting);
         }
+    }
+
+    public function customPaginate(ProductFilterDTO $productFilterDTO)
+    {
+        $query = $this->buildQuery($productFilterDTO);
+
+        if (!$productFilterDTO->sort) {
+            $productFilterDTO->sort = ProductSortEnum::CREATED_AT_DESC->value;
+        }
+
+        return $query->cursorPaginate(
+            $productFilterDTO->perPage,
+            ['*'],
+            'cursor',
+            $productFilterDTO->cursor // Параметр cursor из DTO
+        );
     }
 }
