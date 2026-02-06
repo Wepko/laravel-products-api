@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property mixed $name
  * @property mixed $price
  * @property mixed $in_stock
- * @property BelongsTo $category
+ * @property Category $category
  */
 class Product extends AbstractBaseModel
 {

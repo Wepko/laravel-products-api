@@ -17,6 +17,11 @@ Route::get('/pagination/simple', function () {
 Route::get('/pagination/cursor', function () {
     return view('products.types.cursor-pagination');
 });
+
+Route::get('/pagination/custom', function () {
+    return view('products.types.custom-pagination');
+});
+
 //Route::get('/pagination/simple', function () {
 //    return view('products.types.simple-pagination');
 //});

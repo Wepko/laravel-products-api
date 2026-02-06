@@ -7,6 +7,7 @@ namespace App\Services;
 use App\DTOs\CategoryDTO;
 use App\DTOs\Product\ProductDTO;
 use App\DTOs\Product\ProductFilterDTO;
+use App\Filters\ProductFilter;
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Eloquent\ProductRepository;
@@ -22,38 +23,33 @@ class ProductService
         private ProductRepositoryInterface $repository
     )
     {
-        $this->repository = new ProductRepository();
+        $this->repository = new ProductRepository(
+            filter: new ProductFilter()
+        );
     }
 
+    /**
+     * @param ProductFilterDTO $filters
+     * @return LengthAwarePaginator
+     */
     public function getPaginateProducts(ProductFilterDTO $filters): LengthAwarePaginator
     {
         $paginator = $this->repository->paginate($filters);
-
-        $transformedCollection = $paginator->getCollection()->map(
-            fn(Product $product) => new ProductDTO(
-                id: $product->id,
-                name: $product->name,
-                price: (float)$product->price,
-                inStock: $product->in_stock,
-                rating: $product->rating,
-                category: $product->category ? CategoryDTO::from($product->category->toArray()) : null,
-            )
-        );
-
-        $paginator->setCollection($transformedCollection);
 
         return $paginator;
     }
 
     /**
-     * @throws Exception
+     * @param ProductFilterDTO $filters
+     * @param string $type
+     * @return LengthAwarePaginator|Paginator|CursorPaginator|string
      */
     public function getPaginateProductsBySlug(ProductFilterDTO $filters, string $type): LengthAwarePaginator|Paginator|CursorPaginator|string
     {
-
+        //Todo: use Pattern Strategy
         $paginator = match ($type) {
             'simple' => $this->repository->simplePaginate($filters),
-            'custom' => '',
+            'custom' => $this->repository->customPaginate($filters),
             'per-page' => $this->repository->paginate($filters),
             'cursor' => $this->repository->cursorPaginate($filters),
             default => throw new \InvalidArgumentException(

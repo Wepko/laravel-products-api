@@ -7,6 +7,8 @@ use App\DTOs\Product\ProductFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductFilterRequest;
 use App\Http\Resources\ProductResource;
+use App\Http\Responses\PaginatedApiResponse;
+use App\Http\Responses\PaginatedResponse;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +24,7 @@ use phpDocumentor\Reflection\Exception;
     name: 'Products',
     description: 'Products catalog'
 )]
-class ProductController extends Controller
+class ProductController extends BaseApiController
 {
 
     public function __construct(
@@ -32,7 +34,7 @@ class ProductController extends Controller
 
     /**
      * @param ProductFilterRequest $request
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return JsonResponse
      */
     #[OA\Get(
         path: '/api/products',
@@ -60,15 +62,22 @@ class ProductController extends Controller
      * ToDo: only standard  responseJson
      *  don't use AnonymousResourceCollection!
      */
-    public function index(ProductFilterRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function index(ProductFilterRequest $request): JsonResponse
     {
-        $products =  $this->service->getPaginateProducts(filters: $request->toDTO());
+        $productsPaginator = $this->service->getPaginateProducts(
+            filters: $request->toDTO()
+        );
 
-        /*
-         * ToDo: In ProductResource use DTO implementation
-         *  best practice
-         */
-        return ProductResource::collection($products);
+        $resource = ProductResource::collection($productsPaginator);
+
+        return (new PaginatedApiResponse(
+            data: $resource,
+            paginator: $productsPaginator,
+            message: __('Products retrieved successfully')
+        ))
+            ->addMeta('api_version', 'v1')
+            ->addMeta('cache', false)
+            ->toResponse();
     }
 
 
@@ -77,9 +86,11 @@ class ProductController extends Controller
      */
     public function showBySlug(ProductFilterRequest $request, string $slug): JsonResponse
     {
-        $data = $this->service->getPaginateProductsBySlug(filters: $request->toDTO(), type: $slug);
+        $productsPaginator = $this->service->getPaginateProductsBySlug(filters: $request->toDTO(), type: $slug);
 
-        return response()->json($data);
+        // $resource = ProductResource::collection($productsPaginator);
+
+        return response()->json($productsPaginator);
     }
 
 }
