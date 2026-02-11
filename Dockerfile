@@ -4,25 +4,24 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    zip \
+    unzip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
-    zip \
-    unzip \
-    default-mysql-client \
-    libcurl4-openssl-dev \
-    pkg-config \
-    libssl-dev \
     libpq-dev \
+    default-mysql-client \
     && docker-php-ext-install \
+    pdo \
     pdo_mysql \
+    pdo_pgsql \
     mbstring \
+    zip \
     exif \
     pcntl \
     bcmath \
     gd \
-    zip \
     sockets
 
 # Установка Composer

@@ -84,7 +84,8 @@
                             "price_asc",
                             "price_desc",
                             "rating_desc",
-                            "newest"
+                            "newest",
+                            "newest2"
                         ],
                         "example": "price_desc",
                         "nullable": true
